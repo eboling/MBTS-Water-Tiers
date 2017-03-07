@@ -3,19 +3,40 @@ import csv
 from numpy import loadtxt, arange, ones
 from scipy import stats
 
+#
+#  Accounting data may have multiple account entries in a single quarter, because of multiple services.
+#  This routine collects those all down to a single account entry in the list, per account, with the
+#  usage amount aggregated.  So [(act_A, 10), (act_A, 20)] -> [(act_a, 30)]
+#
+def collect_accounts(dict, usage_values):
+    for t in usage_values:
+        if t[0] in dict:
+            v = dict[t[0]]
+            dict[t[0]] = v + t[1]
+        else:
+            dict[t[0]] = t[1]
+
 def load_csv_water_usage(file_name):
     values = []
     with open(file_name, 'rb') as csvfile:
         reader = csv.reader(csvfile)
         header = reader.next()
-        if (header[1] != 'acct_no') or (header[11] != 'act_usage'):
+        #if (header[1] != 'acct_no') or (header[11] != 'act_usage'):
+        if (header[0] != 'serv_id') or (header[12] != 'bill_usage'):
             raise Exception('water data in unknnown column layout')
         for row in reader:
             try:
-                acct_number = int(row[1])
-                values.append((acct_number, int(row[11])))
+                #acct_number = int(row[1])
+                acct_number = int(row[0])
+                #values.append((acct_number, int(row[11])))
+                values.append((acct_number, int(row[12])))
+                if int(row[11]) / 100.0 > 2500.0:
+                    print row
             except ValueError:
                 continue
+    d = {}
+    collect_accounts(d, values)
+    values = [(k, v) for k, v in d.iteritems()]
     return values
 
 class RawQData:
@@ -38,12 +59,7 @@ class RawQData:
     def collect_account_totals(self):
         d = {}
         for q in self.Qs:
-            for t in q:
-                if t[0] in d:
-                    v = d[t[0]]
-                    d[t[0]] = v + t[1]
-                else:
-                    d[t[0]] = t[1]
+            collect_accounts(d, q);
         return d.values()
     def summarize(self):
         i = 1

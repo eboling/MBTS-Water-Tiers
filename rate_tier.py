@@ -13,6 +13,8 @@ class RateTier:
         self.elasticity = 1.0
     def dump(self):
         print('{0} - {1} rate = {2}, count = {3}, total_volume = {4}, tier_volume = {5}, revenue = {6}'.format(self.low_bound, self.high_bound, self.rate, self.count, self.total_volume, self.tier_volume, self.revenue))
+    def log(self, logger):
+        logger.log('{0} - {1} rate = {2}, count = {3}, total_volume = {4}, tier_volume = {5}, revenue = {6}'.format(self.low_bound, self.high_bound, self.rate, self.count, self.total_volume, self.tier_volume, self.revenue))
     def account(self, volume):
         return
 
@@ -27,6 +29,8 @@ class TierSystem:
         for i in range(len(self.tiers) - n, len(self.tiers)):
             self.tiers[i].elasticity = multipliers[idx]
             idx += 1
+    def get_tiers(self):
+        return self.tiers
     def get_tier(self, volume):
         idx = 0
         for tier in self.tiers:
@@ -39,7 +43,7 @@ class TierSystem:
         if random.random() > 0.5:
             volume = volume * self.tiers[self.get_tier(volume)].elasticity
         for tier in self.tiers:
-            v = min(volume, tier.high_bound) - tier.low_bound - 1
+            v = min(volume, tier.high_bound) - tier.low_bound
             tier.revenue += v * tier.rate
             tier.total_volume += v
             if volume <= tier.high_bound:

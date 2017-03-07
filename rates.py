@@ -67,6 +67,7 @@ def should_break_tier(r_squared, subrange):
     if r_squared < last_r_squared - R_SQUARED_EPSILON:
         tier = get_tier(subrange)
         if (tier[1] - tier[0] > TIER_VOLUME_BREAKING_THRESHOLD):
+            #print "breaking: {0}, {1}, {2}".format(r_squared, last_r_squared, tier[1] - tier[0])
             return True
     return False
 
