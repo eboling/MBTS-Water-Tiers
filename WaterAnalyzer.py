@@ -2,8 +2,10 @@ from numpy import loadtxt, arange, ones
 from scipy import stats
 from rate_tier import TierSystem, RateTier
 
-MINIMUM_TIER_PRICE = 5.43
-SECOND_TIER_PRICE = 6.0
+#MINIMUM_TIER_PRICE = 5.43
+#SECOND_TIER_PRICE = 6.0
+MINIMUM_TIER_PRICE = 5.30
+SECOND_TIER_PRICE = 5.50
 LAST_TIER_PRICE = 10.0
 
 '''R^2 deviation from the best fit achieved at which we decide a tier needs to be broken out.'''
@@ -19,6 +21,14 @@ TIER_MINIMUM_COUNT = 40
 TIER_ONE_MEDIAN_FRACTION=0.5
 
 
+def set_key_rates(min, second, last):
+    global MINIMUM_TIER_PRICE
+    global SECOND_TIER_PRICE
+    global LAST_TIER_PRICE
+    MINIMUM_TIER_PRICE = min
+    SECOND_TIER_PRICE = second
+    LAST_TIER_PRICE = last
+    
 class WaterAnalyzer:
     def __init__(self, q_data, logger):
         self.raw_Qs = q_data

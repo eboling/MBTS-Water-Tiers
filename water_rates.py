@@ -4,7 +4,7 @@ from numpy import loadtxt
 import Tkinter as tk
 import tkFileDialog
 from RawQData import RawQData
-from WaterAnalyzer import WaterAnalyzer
+from WaterAnalyzer import WaterAnalyzer, MINIMUM_TIER_PRICE, SECOND_TIER_PRICE, LAST_TIER_PRICE, set_key_rates
 from TableUI import Table
 from rate_tier import TierSystem, RateTier
 
@@ -189,6 +189,24 @@ def do_graph(canvas, values, xMargin, yMargin):
     canvas.bind("<Motion>", lambda event: mouse_move(event, values, graph_rect))
     setup_report_text(canvas)
 
+def install_comparison_tier_system(ts):
+    global comparison_tiers
+    comparison_tiers = ts
+    comparison_tiers.clear_account()
+    for q in raw_Qs.Qs:
+        for v in q:
+            comparison_tiers.account(v[1])
+    comp_annual_total_revenue = comparison_tiers.total_revenue()
+    comp_revenue_table.set(4, 1, comparison_tiers.total_revenue())
+    row = 0
+    for q in raw_Qs.Qs:
+        comparison_tiers.clear_account()
+        for v in q:
+            comparison_tiers.account(v[1])
+        comp_revenue_table.set(row, 1, comparison_tiers.total_revenue())
+        comp_revenue_table.set(row, 2, (float(comparison_tiers.total_revenue()) / float(comp_annual_total_revenue)) * 100.0)
+        row += 1
+
 def install_tier_system(ts):
     global tier_system
     row = 0
@@ -256,7 +274,26 @@ root.grid_rowconfigure(1, weight=1)
 root.grid_columnconfigure(0, weight=1)
 top_frame.grid(row=0, sticky="ew")
 center_frame.grid(row=1, sticky="nsew")
-bottom_frame.grid(row=2, sticky="ew")
+#pad_frame.grid(row=2, column=0)
+bottom_frame.grid(row=2, column = 0, sticky="ew")
+
+def ask_file_helper(caption, dir, ext_desc, ext):
+    options = {}
+    options['defaultextension'] = ext
+    options['filetypes'] = [('all files', '.*'), (ext_desc, ext)]
+    options['initialdir'] = dir
+    options['title'] = caption
+    filename = tkFileDialog.askopenfilename(**options)
+    return filename
+
+def ask_file_save_as_helper(caption, dir, ext_desc, ext):
+    options = {}
+    options['defaultextension'] = ext
+    options['filetypes'] = [('all files', '.*'), (ext_desc, ext)]
+    options['initialdir'] = dir
+    options['title'] = caption
+    filename = tkFileDialog.asksaveasfilename(**options)
+    return filename
 
 def ask_tier_file():
     options = {}
@@ -275,31 +312,42 @@ def load_tier_system():
         for l in lines:
             rates.add_tier(RateTier(l[0], l[1], l[2]))
         install_tier_system(rates)
+        tier_system_label.config(text=os.path.split(filename)[1])
 
 def load_comparison_tiers(filename):
-    global comparison_tiers
     lines = loadtxt(filename)
     rates = TierSystem()
     for l in lines:
         rates.add_tier(RateTier(l[0], l[1], l[2]))
     comparison_tiers = rates
+    comparison_system_label.config(text=os.path.split(filename)[1])
+    install_comparison_tier_system(rates)
     
 def load_comparison_tiers_event():
     filename = ask_tier_file()
     if not filename == '':
         load_comparison_tiers(filename)
 
+def save_graph_event():
+    filename = ask_file_save_as_helper("Save graph", os.getcwd(), "EPS file", ".eps")
+    if not filename == '':
+        canvas.postscript(file=filename)
+
+def analyze_current_data_set():
+    global analyzer
+    analyzer = WaterAnalyzer(raw_Qs, logger)
+    analyzer.Analyze()
+    install_tier_system(analyzer.get_tier_system())
+    tier_system_label.config(text='<from analysis>')
+    select_quarter()
+    
 def load_annual_data(data_dir):
     global raw_Qs
     raw_Qs = RawQData(data_dir)
     global account_totals
-    global analyzer
     account_totals = raw_Qs.collect_account_totals()
     data_dir_value.config(text=os.path.split(data_dir)[1])
-    analyzer = WaterAnalyzer(raw_Qs, logger)
-    analyzer.Analyze()
-    install_tier_system(analyzer.get_tier_system())
-    select_quarter()
+    analyze_current_data_set()
     
 def load_annual_data_event():
     options = {}
@@ -332,11 +380,13 @@ top_frame.grid_columnconfigure(1, weight=1)
 label_widget(top_frame, 0, 0, 'Data set:', -1)
 data_dir_value = label_widget(top_frame, 0, 1, '', 20)
 label_widget(top_frame, 0, 2, 'Tier system:', -1)
-tier_system_label = (top_frame, 0, 3, '', 20)
+tier_system_label = label_widget(top_frame, 0, 3, '', 20)
 label_widget(top_frame, 0, 4, 'Comparison system:', -1)
-comparison_system_label = (top_frame, 0, 5, '', 20)
+comparison_system_label = label_widget(top_frame, 0, 5, '', 20)
 button_widget(top_frame, 0, 6, 'Load data...', load_annual_data_event)
 button_widget(top_frame, 0, 7, 'Load tiers...', load_tier_system)
+button_widget(top_frame, 0, 8, 'Load comp tiers...', load_comparison_tiers_event)
+button_widget(top_frame, 0, 9, 'Save graph...', save_graph_event)
 
 # center frame widgets
 center_frame.grid_rowconfigure(0, weight=1)
@@ -373,14 +423,22 @@ tier_table = Table(tier_frame, ["Low", "High", "Price"], (12, 3), app_bg_color)
 elasticity_table = Table(elasticity_frame, ["Elasticity"], (12, 1), app_bg_color)
 
 # Set up the bottom frames
-bottom_frame.grid_rowconfigure(0, weight=1)
-bottom_frame.grid_columnconfigure(1, weight=1)
+#bottom_frame.grid_rowconfigure(0, weight=1)
+#bottom_frame.grid_columnconfigure(1, weight=1)
 
+pad_frame = tk.Frame(bottom_frame, bg=app_bg_color, width=200, height = 400, pady=3, padx=3)
+pad_frame.grid_columnconfigure(0, minsize=80)
 volume_frame = tk.Frame(bottom_frame, bg=app_bg_color, width=300, height=400, pady=3, padx=3)
 revenue_frame = tk.Frame(bottom_frame, bg=app_bg_color, width=300, height=400, pady=3, padx=3)
-volume_frame.grid(row=0, column = 0, sticky='ns')
-revenue_frame.grid(row=0, column = 1, sticky='ns')
+comp_revenue_frame = tk.Frame(bottom_frame, bg=app_bg_color, width=300, height=400, pady=3, padx=3)
+key_rates_frame = tk.Frame(bottom_frame, bg=app_bg_color, width=300, height=400, pady=3, padx=3)
+pad_frame.grid(row=0, column = 0, sticky='ns')
+volume_frame.grid(row=0, column = 1, sticky='ns')
+revenue_frame.grid(row=0, column = 2, sticky='ns')
+comp_revenue_frame.grid(row=0, column = 3, sticky='ns')
+key_rates_frame.grid(row=0, column = 4, sticky='ns')
 
+label_widget(pad_frame, 0, 0, '', -1)
 volume_table = Table(volume_frame, ["Quarter", "Volume", "Pct"], (5, 3), app_bg_color)
 volume_table.set(0, 0, "Q1")
 volume_table.set(1, 0, "Q2")
@@ -397,11 +455,53 @@ revenue_table.set(3, 0, "Q4")
 revenue_table.set(4, 0, "Annual")
 revenue_table.set_column_width(1, 12)
 revenue_table.set_column_width(2, 12)
+comp_revenue_table = Table(comp_revenue_frame, ["Quarter", "Comparison $", "Pct"], (5, 3), app_bg_color)
+comp_revenue_table.set(0, 0, "Q1")
+comp_revenue_table.set(1, 0, "Q2")
+comp_revenue_table.set(2, 0, "Q3")
+comp_revenue_table.set(3, 0, "Q4")
+comp_revenue_table.set(4, 0, "Annual")
+comp_revenue_table.set_column_width(1, 12)
+comp_revenue_table.set_column_width(2, 12)
+key_rates_table = Table(key_rates_frame, ["Tier", "Rate($)"], (3, 2), app_bg_color)
+key_rates_table.set(0, 0, "First")
+key_rates_table.set(1, 0, "Second")
+key_rates_table.set(2, 0, "Last")
+key_rates_table.set_column_width(1, 12)
+key_rates_table.set(0, 1, str(MINIMUM_TIER_PRICE))
+key_rates_table.set(1, 1, str(SECOND_TIER_PRICE))
+key_rates_table.set(2, 1, str(LAST_TIER_PRICE))
+def set_key_rates_event():
+    set_key_rates(float(key_rates_table.get(0, 1)), float(key_rates_table.get(1, 1)), float(key_rates_table.get(2, 1)))
+    analyze_current_data_set()
+def try_elasticity_event():
+    elasticity = []
+    i = len(tier_system.get_tiers()) - 1
+    while i >= 0:
+        elasticity.append(float(elasticity_table.get(i, 0)))
+        i -= 1
+    tier_system.set_elasticity(elasticity)
+    annual_total_volume = 0
+    annual_total_revenue = 0
+    NUM_ITERS = 100
+    tier_system.clear_account()
+    for i in xrange(0, NUM_ITERS):
+        for q in raw_Qs.Qs:
+            for v in q:
+                tier_system.account(v[1])
+        annual_total_volume += tier_system.total_volume()
+        annual_total_revenue += tier_system.total_revenue()
+        tier_system.clear_account()
+    volume_table.set(4, 1, annual_total_volume / NUM_ITERS)
+    revenue_table.set(4, 1, annual_total_revenue / NUM_ITERS)
+    
+button_widget(key_rates_frame, 4, 1, 'Set key rates', set_key_rates_event)
+button_widget(key_rates_frame, 5, 1, 'Try elasticity', try_elasticity_event)
 
 # Prime the application
 load_annual_data(os.getcwd() + '/datasets/2015')
 install_tier_system(analyzer.get_tier_system())
-load_comparison_tiers(os.getcwd() + '/mbts_current.txt')
+load_comparison_tiers(os.getcwd() + '/tiers/mbts_current.txt')
 select_quarter();
 
 tk.mainloop()

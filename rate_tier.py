@@ -1,5 +1,6 @@
 import sys
 import random
+from numpy import loadtxt
 
 class RateTier:
     def __init__(self, low, high, rate):
@@ -80,3 +81,10 @@ class TierSystem:
             idx += 1
         f.write('"","","","",=SUM(E2:E{0})\n'.format(len(self.tiers) + 1))
         f.close()
+    @staticmethod
+    def load_from_file(filename):
+        lines = loadtxt(filename)
+        ts = TierSystem()
+        for l in lines:
+            ts.add_tier(RateTier(l[0], l[1], l[2]))
+        return ts
