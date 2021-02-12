@@ -1,5 +1,6 @@
 import sys
 import os
+import random
 from numpy import loadtxt
 import Tkinter as tk
 import tkFileDialog
@@ -195,14 +196,14 @@ def install_comparison_tier_system(ts):
     comparison_tiers.clear_account()
     for q in raw_Qs.Qs:
         for v in q:
-            comparison_tiers.account(v[1])
+            comparison_tiers.account(v.get_billable_usage())
     comp_annual_total_revenue = comparison_tiers.total_revenue()
     comp_revenue_table.set(4, 1, comparison_tiers.total_revenue())
     row = 0
     for q in raw_Qs.Qs:
         comparison_tiers.clear_account()
         for v in q:
-            comparison_tiers.account(v[1])
+            comparison_tiers.account(v.get_billable_usage())
         comp_revenue_table.set(row, 1, comparison_tiers.total_revenue())
         comp_revenue_table.set(row, 2, (float(comparison_tiers.total_revenue()) / float(comp_annual_total_revenue)) * 100.0)
         row += 1
@@ -228,7 +229,7 @@ def install_tier_system(ts):
     tier_system.clear_account()
     for q in raw_Qs.Qs:
         for v in q:
-            tier_system.account(v[1])
+            tier_system.account(v.get_billable_usage())
     annual_total_volume = tier_system.total_volume()
     annual_total_revenue = tier_system.total_revenue()
     volume_table.set(4, 1, annual_total_volume)
@@ -239,7 +240,7 @@ def install_tier_system(ts):
     for q in raw_Qs.Qs:
         tier_system.clear_account()
         for v in q:
-            tier_system.account(v[1])
+            tier_system.account(v.get_billable_usage())
         volume_table.set(row, 1, tier_system.total_volume())
         volume_table.set(row, 2, (float(tier_system.total_volume()) / float(annual_total_volume)) * 100.0)
         revenue_table.set(row, 1, tier_system.total_revenue())
@@ -262,7 +263,7 @@ def select_quarter():
     if Q_var.get() == 4:
         do_graph(canvas, account_totals, 20, 20)
     else:
-        do_graph(canvas, [ x[1] for x in raw_Qs.Qs[Q_var.get()] ], 20, 20)
+        do_graph(canvas, [ x.get_usage() for x in raw_Qs.Qs[Q_var.get()] ], 20, 20)
 
 root = tk.Tk()
 
@@ -345,7 +346,7 @@ def load_annual_data(data_dir):
     global raw_Qs
     raw_Qs = RawQData(data_dir)
     global account_totals
-    account_totals = raw_Qs.collect_account_totals()
+    account_totals = [ x.get_usage() for x in raw_Qs.collect_account_totals()]
     data_dir_value.config(text=os.path.split(data_dir)[1])
     analyze_current_data_set()
     
@@ -488,7 +489,7 @@ def try_elasticity_event():
     for i in xrange(0, NUM_ITERS):
         for q in raw_Qs.Qs:
             for v in q:
-                tier_system.account(v[1])
+                tier_system.account(v.get_billable_usage())
         annual_total_volume += tier_system.total_volume()
         annual_total_revenue += tier_system.total_revenue()
         tier_system.clear_account()
@@ -499,9 +500,9 @@ button_widget(key_rates_frame, 4, 1, 'Set key rates', set_key_rates_event)
 button_widget(key_rates_frame, 5, 1, 'Try elasticity', try_elasticity_event)
 
 # Prime the application
-load_annual_data(os.getcwd() + '/datasets/2015')
+load_annual_data(os.getcwd() + '/datasets/2017')
 install_tier_system(analyzer.get_tier_system())
-load_comparison_tiers(os.getcwd() + '/tiers/mbts_current.txt')
+load_comparison_tiers(os.getcwd() + '/tiers/mbts_2017.txt')
 select_quarter();
 
 tk.mainloop()

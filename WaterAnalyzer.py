@@ -4,9 +4,19 @@ from rate_tier import TierSystem, RateTier
 
 #MINIMUM_TIER_PRICE = 5.43
 #SECOND_TIER_PRICE = 6.0
-MINIMUM_TIER_PRICE = 5.30
-SECOND_TIER_PRICE = 5.50
-LAST_TIER_PRICE = 10.0
+
+# Used for 2017 anaylsis
+#MINIMUM_TIER_PRICE = 5.30
+#SECOND_TIER_PRICE = 5.50
+#LAST_TIER_PRICE = 10.0
+
+# Used for 2018 analysis
+MINIMUM_TIER_PRICE = 5.68
+SECOND_TIER_PRICE = 5.78
+LAST_TIER_PRICE = 8.0
+
+'''This is the number that we set as the maximum bound of water usage, as a fencepost for the last tier.'''
+INFINITY = 100000.0
 
 '''R^2 deviation from the best fit achieved at which we decide a tier needs to be broken out.'''
 R_SQUARED_EPSILON = 0.02
@@ -113,7 +123,7 @@ class WaterAnalyzer:
             tn = self.tiers[i + 1]
             #tn.low_bound = t.high_bound + 1.0
             tn.low_bound = t.high_bound
-            self.tiers[len(self.tiers) - 1].high_bound = 100000.0
+            self.tiers[len(self.tiers) - 1].high_bound = INFINITY
         self.collapse_tiers()
         #tiers = self.collapse_tiers(tiers)
         #return self.tiers

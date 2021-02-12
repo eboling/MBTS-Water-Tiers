@@ -25,14 +25,16 @@ class TierSystem:
     def add_tier(self, tier):
         self.tiers.append(tier)
     def set_elasticity(self, multipliers):
-        n = len(multipliers)
-        idx = 0
-        for i in range(len(self.tiers) - n, len(self.tiers)):
-            self.tiers[i].elasticity = multipliers[idx]
-            idx += 1
+        for i in xrange(0, len(self.tiers)):
+            self.tiers[i].elasticity = multipliers[i]
+        #n = len(multipliers)
+        #idx = 0
+        #for i in range(len(self.tiers) - n, len(self.tiers)):
+        #    self.tiers[i].elasticity = multipliers[idx]
+        #    idx += 1
     def get_tiers(self):
         return self.tiers
-    def get_tier(self, volume):
+    def get_tier_index(self, volume):
         idx = 0
         for tier in self.tiers:
             v = min(volume, tier.high_bound) - tier.low_bound - 1
@@ -40,9 +42,12 @@ class TierSystem:
                 return idx
             idx += 1
         return idx
+    def get_tier(self, volume):
+        idx = self.get_tier_index(volume)
+        return self.tiers[idx]
     def account(self, volume):
         if random.random() > 0.5:
-            volume = volume * self.tiers[self.get_tier(volume)].elasticity
+            volume = volume * self.get_tier(volume).elasticity
         for tier in self.tiers:
             v = min(volume, tier.high_bound) - tier.low_bound
             tier.revenue += v * tier.rate
