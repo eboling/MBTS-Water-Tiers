@@ -1,4 +1,4 @@
-import Tkinter as tk
+import tkinter as tk
 
 class Table:
     def setup_widgets(self, header_row, dimensions):
@@ -11,9 +11,9 @@ class Table:
             l.config(bg=self.bg_color)
             idx += 1
             self.headers.append(l)
-        for row in xrange(1, dimensions[0] + 1):
+        for row in range(1, dimensions[0] + 1):
             r = []
-            for col in xrange(0, dimensions[1]):
+            for col in range(0, dimensions[1]):
                 e = tk.Entry(self.frame, width=8, justify=tk.RIGHT)
                 e.grid(row = row, column = col)
                 e.config(bg = "white");

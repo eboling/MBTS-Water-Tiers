@@ -100,9 +100,10 @@ class RawQData:
         
     def load_csv_water_usage(self, file_name, filter):
         d = {}
-        with open(file_name, 'rb') as csvfile:
+        with open(file_name, 'r') as csvfile:
             reader = csv.reader(csvfile)
-            header = reader.next()
+#            header = reader.next()
+            header = next(reader)
             if (header[0] != 'serv_id') or (header[12] != 'bill_usage'):
                 raise Exception('water data in unknown column layout')
             for row in reader:
@@ -123,7 +124,7 @@ class RawQData:
                         print(row)
                 except ValueError:
                     continue
-        return [v for k, v in d.iteritems()]
+        return [v for k, v in d.items()]
 
     def basic_stats(self):
         #usage_numbers = [ [x[1] for x in q] for q in self.Qs]
@@ -138,7 +139,7 @@ class RawQData:
                     v.set_usage(v.get_usage() + reading.get_usage())
                 else:
                     d[reading.get_service()] = MeterReading(reading.get_service(), reading.get_usage())
-        return [v for k, v in d.iteritems()]
+        return [v for k, v in d.items()]
     def summarize(self):
         i = 1
         for s in self.basic_stats():

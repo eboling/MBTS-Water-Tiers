@@ -2,8 +2,9 @@ import sys
 import os
 import random
 from numpy import loadtxt
-import Tkinter as tk
-import tkFileDialog
+import tkinter as tk
+from tkinter import filedialog
+#import tkFileDialog
 from RawQData import RawQData
 from WaterAnalyzer import WaterAnalyzer, MINIMUM_TIER_PRICE, SECOND_TIER_PRICE, LAST_TIER_PRICE, set_key_rates
 from TableUI import Table
@@ -64,8 +65,8 @@ def draw_axes(canvas, values, graph_rect):
     ymax = graph_rect.map_y(graph_rect.height())
     canvas.create_line(x0, y0, x0, ymax, fill="black")
     canvas.create_line(x0, y0, xmax, y0, fill="black")
-    x_step = graph_rect.width() / 10
-    for xin in xrange(0, graph_rect.width(), x_step):
+    x_step = int(graph_rect.width() / 10)
+    for xin in range(0, graph_rect.width(), x_step):
         x = graph_rect.map_x(xin)
         canvas.create_line(x, y0, x, y0 + MAJOR_TICK_SIZE, fill="black")
         x_val = x_sampler.f_inverse(xin)
@@ -73,7 +74,7 @@ def draw_axes(canvas, values, graph_rect):
     #y_step = int(values[len(values) - 1] / 10)
     #for yin in xrange(0, int(values[len(values) - 1]), y_step):
     y_step = int(GRAPH_MAX / 10)
-    for yin in xrange(0, GRAPH_MAX, y_step):
+    for yin in range(0, GRAPH_MAX, y_step):
         y_val = yin
         y = graph_rect.map_y(y_sampler.f(y_val))
         canvas.create_line(x0 - MAJOR_TICK_SIZE, y, x0, y, fill="black")
@@ -183,7 +184,7 @@ def do_graph(canvas, values, xMargin, yMargin):
         y1 = graph_rect.map_y(y_val);
         canvas.create_line(x0, y0, x1, y1, fill="black")
         return x1, y1
-    for x_val in xrange(x_step, graph_rect.width(), x_step):
+    for x_val in range(x_step, graph_rect.width(), x_step):
         x0, y0 = render_segment(x_val, x0, y0)
     x0, y0 = render_segment(graph_rect.width(), x0, y0)
     render_tier_lines(canvas, graph_rect)
@@ -251,9 +252,9 @@ def install_tier_system(ts):
         
 class Logger:
     def __init__(self):
-        print 'Logger'
+        print('Logger')
     def log(self, msg):
-        print msg
+        print(msg)
 
 logger = Logger()
 
@@ -284,7 +285,7 @@ def ask_file_helper(caption, dir, ext_desc, ext):
     options['filetypes'] = [('all files', '.*'), (ext_desc, ext)]
     options['initialdir'] = dir
     options['title'] = caption
-    filename = tkFileDialog.askopenfilename(**options)
+    filename = filedialog.askopenfilename(**options)
     return filename
 
 def ask_file_save_as_helper(caption, dir, ext_desc, ext):
@@ -293,7 +294,7 @@ def ask_file_save_as_helper(caption, dir, ext_desc, ext):
     options['filetypes'] = [('all files', '.*'), (ext_desc, ext)]
     options['initialdir'] = dir
     options['title'] = caption
-    filename = tkFileDialog.asksaveasfilename(**options)
+    filename = filedialog.asksaveasfilename(**options)
     return filename
 
 def ask_tier_file():
@@ -302,7 +303,7 @@ def ask_tier_file():
     options['filetypes'] = [('all files', '.*'), ('text files', '.txt')]
     options['initialdir'] = os.getcwd() + '/tiers'
     options['title'] = 'Load Tier System'
-    filename = tkFileDialog.askopenfilename(**options)
+    filename = filedialog.askopenfilename(**options)
     return filename
 
 def load_tier_system():
@@ -354,7 +355,7 @@ def load_annual_data_event():
     options = {}
     options['initialdir'] = os.getcwd() + '/datasets'
     options['title'] = 'Load Annual Data'
-    data_dir = tkFileDialog.askdirectory(**options)
+    data_dir = filedialog.askdirectory(**options)
     if not data_dir == '':
         load_annual_data(data_dir)
 
@@ -486,7 +487,7 @@ def try_elasticity_event():
     annual_total_revenue = 0
     NUM_ITERS = 100
     tier_system.clear_account()
-    for i in xrange(0, NUM_ITERS):
+    for i in range(0, NUM_ITERS):
         for q in raw_Qs.Qs:
             for v in q:
                 tier_system.account(v.get_billable_usage())

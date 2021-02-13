@@ -118,7 +118,7 @@ class WaterAnalyzer:
 
     def finalize_tiers(self):
         self.tiers[0].low_bound = 0.0
-        for i in xrange(0, len(self.tiers) - 2):
+        for i in range(0, len(self.tiers) - 2):
             t = self.tiers[i]
             tn = self.tiers[i + 1]
             #tn.low_bound = t.high_bound + 1.0
@@ -150,7 +150,7 @@ class WaterAnalyzer:
         while True:
             self.last_r_squared = -1
             broke_range = False
-            for i in xrange(self.start, len(self.raw_data) - 4):
+            for i in range(self.start, len(self.raw_data) - 4):
                 subrange = self.raw_data[self.start:i + 4]
                 xi = arange(0, len(subrange))
                 slope, intercept, r_value, p_value, std_err = stats.linregress(xi,subrange)
@@ -183,7 +183,7 @@ class WaterAnalyzer:
         self.logger.log("Finalized tiers:");
         for t in self.tiers:
             t.log(self.logger)
-        quantiles = stats.mstats.hdquantiles(self.raw_data, map(lambda x: x / 100.0, range(5, 100, 5)))
+        quantiles = stats.mstats.hdquantiles(self.raw_data, [x / 100.0 for x in range(5, 100, 5)])
         quantiles = map(lambda x: int(round(x)), quantiles)
         self.logger.log('quantiles:')
         self.logger.log(str(quantiles))
