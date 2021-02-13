@@ -93,6 +93,7 @@ usage_text = None
 tier_text = []
 total_text = None
 comparison_text = None
+cum_usage_text = None
 def mouse_move(event, values, graph_rect):
     global blue_h
     global blue_v
@@ -100,6 +101,7 @@ def mouse_move(event, values, graph_rect):
     global tier_text
     global total_text
     global comparison_text
+    global cum_usage_text
     #print "move: {0}, {1}".format(event.x, event.y)
     x_mapping = LinearMapping((0, graph_rect.width()), (0, len(values) - 1))
     y_mapping = LinearMapping((0, GRAPH_MAX), (0, graph_rect.height()))
@@ -107,6 +109,7 @@ def mouse_move(event, values, graph_rect):
     index = int(x_mapping.f(x_val))
     if index < len(values):
         usage = values[index]
+        usage_index = index
         y_val = y_mapping.f(usage)
         x1 = graph_rect.map_x(x_val)
         y1 = graph_rect.map_y(y_val)
@@ -136,13 +139,22 @@ def mouse_move(event, values, graph_rect):
                                                                                                   (revenue - compare_revenue) / compare_revenue * 100.0))
         else:
             canvas.itemconfigure(comparison_text, text="comparison: ${0:.2f}".format(compare_revenue))
-            
+        cum_usage = 0
+        total_usage = sum(values)
+        n = 0
+        for u in values:
+            if n > usage_index:
+                break
+            cum_usage += values[n]
+            n += 1
+        canvas.itemconfigure(cum_usage_text, text=f"cumulative usage: {int(cum_usage)} ({(cum_usage / total_usage)*100.0:.2f}%)")
                               
 def setup_report_text(canvas):
     global usage_text
     global tier_text
     global total_text
     global comparison_text
+    global cum_usage_text
     left = 200
     top = 25
     step = 20
@@ -161,6 +173,8 @@ def setup_report_text(canvas):
     total_text = canvas.create_text(left, top, anchor = tk.NW, text="", width = 200)
     top += step
     comparison_text = canvas.create_text(left, top, anchor = tk.NW, text="", width = 200)
+    top += step
+    cum_usage_text = canvas.create_text(left, top, anchor = tk.NW, text="", width = 400)
         
 def do_graph(canvas, values, xMargin, yMargin):
     #canvas_width =  800
@@ -395,7 +409,7 @@ center_frame.grid_rowconfigure(0, weight=1)
 center_frame.grid_columnconfigure(1, weight=1)
 
 Q_frame = tk.Frame(center_frame, bg=app_bg_color, width=200, height=300)
-graph_frame = tk.Frame(center_frame, bg='white', width=600, height=400, pady=3, padx=3)
+graph_frame = tk.Frame(center_frame, bg='white', width=800, height=800, pady=3, padx=3)
 tier_frame = tk.Frame(center_frame, bg=app_bg_color, width=300, height=400, pady=3, padx=3)
 elasticity_frame = tk.Frame(center_frame, bg=app_bg_color, width=100, height=400, pady=3, padx=3)
 
@@ -415,8 +429,8 @@ for r in radio_params:
 Q_frame.grid(row=0, column = 0, sticky='ns')
 
 # Set up the graph
-canvas_width =  600
-canvas_height = 300
+canvas_width =  780
+canvas_height = 780
 canvas = tk.Canvas(graph_frame, width=canvas_width, height=canvas_height, bg='white')
 canvas.grid(row=0, column=0, sticky='nsew')
 
