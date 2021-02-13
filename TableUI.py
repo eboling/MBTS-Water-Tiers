@@ -1,29 +1,32 @@
 import tkinter as tk
+from tkinter import ttk
 
-class Table:
+class Table(ttk.Frame):
     def setup_widgets(self, header_row, dimensions):
         if len(header_row) != dimensions[1]:
             raise Exception("header row length doesn't match dimensions in table")
         idx = 0
         for caption in header_row:
-            l = tk.Label(self.frame, text=caption)
-            l.grid(row=0, column=idx, sticky=tk.W)
-            l.config(bg=self.bg_color)
+            l = ttk.Label(self, text=caption)
+            l.grid(row=0, column=idx, sticky=tk.EW)
+#            l.config(bg=self.bg_color)
             idx += 1
             self.headers.append(l)
+            self.columnconfigure(idx - 1, weight=1)
         for row in range(1, dimensions[0] + 1):
             r = []
             for col in range(0, dimensions[1]):
-                e = tk.Entry(self.frame, width=8, justify=tk.RIGHT)
+                e = ttk.Entry(self, width=8, justify=tk.RIGHT)
                 e.grid(row = row, column = col)
-                e.config(bg = "white");
+#                e.config(bg = "white");
                 r.append(e)
             self.cells.append(r)
+            self.rowconfigure(row - 1, weight=1)
         
     def __init__(self, frame, header_row, dimensions, bg_color):
+        ttk.Frame.__init__(self, frame)
         self.cells = []
         self.headers = []
-        self.frame = frame
         self.bg_color = bg_color
         self.setup_widgets(header_row, dimensions)
 

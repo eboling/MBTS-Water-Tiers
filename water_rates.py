@@ -3,6 +3,7 @@ import os
 import random
 from numpy import loadtxt
 import tkinter as tk
+from tkinter import ttk
 from tkinter import filedialog
 #import tkFileDialog
 from RawQData import RawQData
@@ -282,9 +283,12 @@ def select_quarter():
 
 root = tk.Tk()
 
-top_frame = tk.Frame(root, bg=app_bg_color, width=600, height=50, pady=3)
-center_frame= tk.Frame(root, bg=app_bg_color, width=50, height=50, padx = 3, pady=3)
-bottom_frame= tk.Frame(root, bg=app_bg_color, width=600, height=400, pady=3)
+#top_frame = ttk.Frame(root, background=app_bg_color, width=600, height=50, pady=3)
+#center_frame= ttk.Frame(root, background=app_bg_color, width=50, height=50, padx = 3, pady=3)
+#bottom_frame= ttk.Frame(root, background=app_bg_color, width=600, height=400, pady=3)
+top_frame = ttk.Frame(root, width=600, height=50)
+center_frame= ttk.Frame(root, width=50, height=50)
+bottom_frame= ttk.Frame(root, width=600, height=400)
 
 root.grid_rowconfigure(1, weight=1)
 root.grid_columnconfigure(0, weight=1)
@@ -376,18 +380,23 @@ def load_annual_data_event():
 # helper for creating and configuring label widgets
 def label_widget(frame, row, column, text, width):
     if width < 0:
-        id = tk.Label(frame, text=text)
+        id = ttk.Label(frame, text=text)
     else:
-        id = tk.Label(frame, text=text, width=width, anchor=tk.W)
+        id = ttk.Label(frame, text=text, width=width, anchor=tk.W)
     id.grid(row=row, column=column, sticky=tk.W)
-    id.config(bg=app_bg_color)
+    id.config(background=app_bg_color)
     return id
 
 def button_widget(frame, row, column, text, command):
-    id = tk.Button(frame, text=text, command=command)
+    id = ttk.Button(frame, text=text, command=command)
     id.grid(row=row, column=column, sticky=tk.W)
-    id.config(bg=app_bg_color)
+#    id.config(background=app_bg_color)
     return id
+
+def singleton_component_setup(frame, component):
+    component.grid(row=0, column=0, sticky=tk.NSEW)
+    frame.rowconfigure(0, weight=1)
+    frame.columnconfigure(0, weight=1)
 
 # top frame widgets
 top_frame.grid_rowconfigure(0, weight=1)
@@ -408,10 +417,10 @@ button_widget(top_frame, 0, 9, 'Save graph...', save_graph_event)
 center_frame.grid_rowconfigure(0, weight=1)
 center_frame.grid_columnconfigure(1, weight=1)
 
-Q_frame = tk.Frame(center_frame, bg=app_bg_color, width=200, height=300)
-graph_frame = tk.Frame(center_frame, bg='white', width=800, height=800, pady=3, padx=3)
-tier_frame = tk.Frame(center_frame, bg=app_bg_color, width=300, height=400, pady=3, padx=3)
-elasticity_frame = tk.Frame(center_frame, bg=app_bg_color, width=100, height=400, pady=3, padx=3)
+Q_frame = ttk.Frame(center_frame, width=200, height=300)
+graph_frame = ttk.Frame(center_frame, width=800, height=800)
+tier_frame = ttk.Frame(center_frame, width=300, height=400)
+elasticity_frame = ttk.Frame(center_frame, width=100, height=400)
 
 graph_frame.grid(row=0, column = 1, sticky='nsew')
 tier_frame.grid(row=0, column = 2, sticky='ns')
@@ -423,31 +432,33 @@ Q_var.set(0)
 
 radio_params = [ ("Q1", 0), ("Q2", 1), ("Q3", 2), ("Q4", 3), ("Annual", 4) ]
 for r in radio_params:
-    rb = tk.Radiobutton(Q_frame, text=r[0], variable=Q_var, value=r[1], command=select_quarter)
+    rb = ttk.Radiobutton(Q_frame, text=r[0], variable=Q_var, value=r[1], command=select_quarter)
     rb.grid(row=r[1], column=0, sticky=tk.W)
-    rb.config(bg=app_bg_color)
+#    rb.config(background=app_bg_color)
 Q_frame.grid(row=0, column = 0, sticky='ns')
 
 # Set up the graph
 canvas_width =  780
 canvas_height = 780
-canvas = tk.Canvas(graph_frame, width=canvas_width, height=canvas_height, bg='white')
+canvas = tk.Canvas(graph_frame, width=canvas_width, height=canvas_height, background='white')
 canvas.grid(row=0, column=0, sticky='nsew')
 
 # Set up the tier frame
 tier_table = Table(tier_frame, ["Low", "High", "Price"], (12, 3), app_bg_color)
+singleton_component_setup(tier_frame, tier_table)
 elasticity_table = Table(elasticity_frame, ["Elasticity"], (12, 1), app_bg_color)
+singleton_component_setup(elasticity_frame, elasticity_table)
 
 # Set up the bottom frames
 #bottom_frame.grid_rowconfigure(0, weight=1)
 #bottom_frame.grid_columnconfigure(1, weight=1)
 
-pad_frame = tk.Frame(bottom_frame, bg=app_bg_color, width=200, height = 400, pady=3, padx=3)
+pad_frame = ttk.Frame(bottom_frame, width=200, height = 400)
 pad_frame.grid_columnconfigure(0, minsize=80)
-volume_frame = tk.Frame(bottom_frame, bg=app_bg_color, width=300, height=400, pady=3, padx=3)
-revenue_frame = tk.Frame(bottom_frame, bg=app_bg_color, width=300, height=400, pady=3, padx=3)
-comp_revenue_frame = tk.Frame(bottom_frame, bg=app_bg_color, width=300, height=400, pady=3, padx=3)
-key_rates_frame = tk.Frame(bottom_frame, bg=app_bg_color, width=300, height=400, pady=3, padx=3)
+volume_frame = ttk.Frame(bottom_frame, width=300, height=400)
+revenue_frame = ttk.Frame(bottom_frame, width=300, height=400)
+comp_revenue_frame = ttk.Frame(bottom_frame, width=300, height=400)
+key_rates_frame = ttk.Frame(bottom_frame, width=300, height=400)
 pad_frame.grid(row=0, column = 0, sticky='ns')
 volume_frame.grid(row=0, column = 1, sticky='ns')
 revenue_frame.grid(row=0, column = 2, sticky='ns')
@@ -456,6 +467,7 @@ key_rates_frame.grid(row=0, column = 4, sticky='ns')
 
 label_widget(pad_frame, 0, 0, '', -1)
 volume_table = Table(volume_frame, ["Quarter", "Volume", "Pct"], (5, 3), app_bg_color)
+singleton_component_setup(volume_frame, volume_table)
 volume_table.set(0, 0, "Q1")
 volume_table.set(1, 0, "Q2")
 volume_table.set(2, 0, "Q3")
@@ -464,6 +476,7 @@ volume_table.set(4, 0, "Annual")
 volume_table.set_column_width(1, 12)
 volume_table.set_column_width(2, 12)
 revenue_table = Table(revenue_frame, ["Quarter", "$", "Pct"], (5, 3), app_bg_color)
+singleton_component_setup(revenue_frame, revenue_table)
 revenue_table.set(0, 0, "Q1")
 revenue_table.set(1, 0, "Q2")
 revenue_table.set(2, 0, "Q3")
@@ -472,6 +485,7 @@ revenue_table.set(4, 0, "Annual")
 revenue_table.set_column_width(1, 12)
 revenue_table.set_column_width(2, 12)
 comp_revenue_table = Table(comp_revenue_frame, ["Quarter", "Comparison $", "Pct"], (5, 3), app_bg_color)
+singleton_component_setup(comp_revenue_frame, comp_revenue_table)
 comp_revenue_table.set(0, 0, "Q1")
 comp_revenue_table.set(1, 0, "Q2")
 comp_revenue_table.set(2, 0, "Q3")
@@ -480,6 +494,7 @@ comp_revenue_table.set(4, 0, "Annual")
 comp_revenue_table.set_column_width(1, 12)
 comp_revenue_table.set_column_width(2, 12)
 key_rates_table = Table(key_rates_frame, ["Tier", "Rate($)"], (3, 2), app_bg_color)
+singleton_component_setup(key_rates_frame, key_rates_table)
 key_rates_table.set(0, 0, "First")
 key_rates_table.set(1, 0, "Second")
 key_rates_table.set(2, 0, "Last")
