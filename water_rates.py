@@ -11,6 +11,8 @@ from WaterAnalyzer import WaterAnalyzer, MINIMUM_TIER_PRICE, SECOND_TIER_PRICE, 
 from TableUI import Table
 from rate_tier import TierSystem, RateTier
 
+import RadioGroup
+
 app_bg_color = 'gray'
 #GRAPH_MAX = 2500
 #GRAPH_MAX = 2200
@@ -263,7 +265,7 @@ def install_tier_system(ts):
         revenue_table.set(row, 2, (float(tier_system.total_revenue()) / float(annual_total_revenue)) * 100.0)
         row += 1
     setup_report_text(canvas)
-    select_quarter()
+    select_quarter(radio_group.selected())
         
 class Logger:
     def __init__(self):
@@ -274,12 +276,14 @@ class Logger:
 logger = Logger()
 
 
-def select_quarter():
+def select_quarter(which):
     canvas.delete("all")
-    if Q_var.get() == 4:
+#    if Q_var.get() == 4:
+    if which == 4:
         do_graph(canvas, account_totals, 20, 20)
     else:
-        do_graph(canvas, [ x.get_usage() for x in raw_Qs.Qs[Q_var.get()] ], 20, 20)
+#        do_graph(canvas, [ x.get_usage() for x in raw_Qs.Qs[Q_var.get()] ], 20, 20)
+        do_graph(canvas, [ x.get_usage() for x in raw_Qs.Qs[which] ], 20, 20)
 
 root = tk.Tk()
 
@@ -359,7 +363,7 @@ def analyze_current_data_set():
     analyzer.Analyze()
     install_tier_system(analyzer.get_tier_system())
     tier_system_label.config(text='<from analysis>')
-    select_quarter()
+    select_quarter(radio_group.selected())
     
 def load_annual_data(data_dir):
     global raw_Qs
@@ -431,10 +435,11 @@ Q_var = tk.IntVar()
 Q_var.set(0)
 
 radio_params = [ ("Q1", 0), ("Q2", 1), ("Q3", 2), ("Q4", 3), ("Annual", 4) ]
-for r in radio_params:
-    rb = ttk.Radiobutton(Q_frame, text=r[0], variable=Q_var, value=r[1], command=select_quarter)
-    rb.grid(row=r[1], column=0, sticky=tk.W)
-#    rb.config(background=app_bg_color)
+radio_group = RadioGroup.RadioGroup(Q_frame, radio_params, select_quarter)
+radio_group.grid(row=0, column=0, sticky=tk.NS)
+#for r in radio_params:
+#    rb = ttk.Radiobutton(Q_frame, text=r[0], variable=Q_var, value=r[1], command=select_quarter)
+#    rb.grid(row=r[1], column=0, sticky=tk.W)
 Q_frame.grid(row=0, column = 0, sticky='ns')
 
 # Set up the graph
@@ -533,6 +538,6 @@ button_widget(key_rates_frame, 5, 1, 'Try elasticity', try_elasticity_event)
 load_annual_data(os.getcwd() + '/datasets/2017')
 install_tier_system(analyzer.get_tier_system())
 load_comparison_tiers(os.getcwd() + '/tiers/mbts_2017.txt')
-select_quarter();
+select_quarter(radio_group.selected());
 
 tk.mainloop()
