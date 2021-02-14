@@ -43,6 +43,7 @@ class Table(ttk.Frame):
             s = str(value)
         state = self.cells[row][column].cget('state')
         self.cells[row][column].configure(state=tk.NORMAL)
+        self.cells[row][column].delete(0, tk.END)
         self.cells[row][column].insert(0, s)
         self.cells[row][column].configure(state=state)
 
