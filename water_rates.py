@@ -19,6 +19,7 @@ app_bg_color = 'gray'
 GRAPH_MAX = 450
 
 tier_system = None
+comparison_tiers = None
 
 class ViewRect:
     def __init__(self, outer_width, outer_height, top_left, bottom_right):
@@ -208,27 +209,55 @@ def do_graph(canvas, values, xMargin, yMargin):
     canvas.bind("<Motion>", lambda event: mouse_move(event, values, graph_rect))
     setup_report_text(canvas)
 
+def update_information_table():
+    if tier_system:
+        summary_info = SummaryInformation(tier_system, raw_Qs)
+        Q_information_table.set(4, VOL_COL, int(summary_info.annual_volume))
+        Q_information_table.set(4, REVENUE_COL, summary_info.annual_revenue)
+        for row in range(0, 4):
+            Q_information_table.set(row, VOL_COL, summary_info.quarterly_information[row][0])
+            Q_information_table.set(row, VOL_PCT_COL, summary_info.quarterly_information[row][1])
+            Q_information_table.set(row, REVENUE_COL, summary_info.quarterly_information[row][2])
+            Q_information_table.set(row, REVENUE_PCT_COL, summary_info.quarterly_information[row][3])
+    if comparison_tiers:
+        comp_summary_info = SummaryInformation(comparison_tiers, raw_Qs)
+        Q_information_table.set(4, COMP_REVENUE_COL, comp_summary_info.annual_revenue)
+        Q_information_table.set(4, COMP_REVENUE_PCT_COL,
+                                    ((summary_info.annual_revenue - comp_summary_info.annual_revenue) /
+                                         comp_summary_info.annual_revenue) * 100.0)
+        for row in range(0, 4):
+            Q_information_table.set(row, COMP_REVENUE_COL, comp_summary_info.quarterly_information[row][2])
+            Q_information_table.set(row, COMP_REVENUE_PCT_COL,
+                                        ((summary_info.quarterly_information[row][2] -
+                                              comp_summary_info.quarterly_information[row][2]) /
+                                        comp_summary_info.quarterly_information[row][2]) * 100.0)
+    
+
 def install_comparison_tier_system(ts):
     global comparison_tiers
     comparison_tiers = ts
-    comparison_tiers.clear_account()
-    for q in raw_Qs.Qs:
-        for v in q:
-            comparison_tiers.account(v.get_billable_usage())
-    comp_annual_total_revenue = comparison_tiers.total_revenue()
-    Q_information_table.set(4, REVENUE_COL, comparison_tiers.total_revenue())
-#    comp_revenue_table.set(4, 1, comparison_tiers.total_revenue())
-    row = 0
-    for q in raw_Qs.Qs:
-        comparison_tiers.clear_account()
-        for v in q:
-            comparison_tiers.account(v.get_billable_usage())
-        Q_information_table.set(row, COMP_REVENUE_COL, comparison_tiers.total_revenue())
-        Q_information_table.set(row, COMP_REVENUE_PCT_COL, (float(comparison_tiers.total_revenue()) / float(comp_annual_total_revenue)) * 100.0)
-#        comp_revenue_table.set(row, 1, comparison_tiers.total_revenue())
-#        comp_revenue_table.set(row, 2, (float(comparison_tiers.total_revenue()) / float(comp_annual_total_revenue)) * 100.0)
-        row += 1
+    update_information_table()
 
+class SummaryInformation:
+    def __init__(self, ts, Qs):
+        ts.clear_account()
+        for q in Qs.Qs:
+            for v in q:
+                ts.account(v.get_billable_usage())
+        self.annual_volume = ts.total_volume()
+        self.annual_revenue = ts.total_revenue()
+        self.quarterly_information = []
+        ts.clear_account()
+        for q in Qs.Qs:
+            ts.clear_account()
+            for v in q:
+                ts.account(v.get_billable_usage())
+            volume = ts.total_volume()
+            revenue = ts.total_revenue()
+            self.quarterly_information.append(
+                (int(volume), (volume / self.annual_volume) * 100.0, revenue,
+                     (revenue / self.annual_revenue) * 100.0))
+        
 def install_tier_system(ts):
     global tier_system
     row = 0
@@ -246,33 +275,11 @@ def install_tier_system(ts):
         tier_table.set(row, 1, t.high_bound);
         tier_table.set(row, 2, t.rate);
         elasticity_table.set(row, 0, 1.0)
+        elasticity_table.set_readonly(row, 0, False)
         row += 1
-    tier_system.clear_account()
-    for q in raw_Qs.Qs:
-        for v in q:
-            tier_system.account(v.get_billable_usage())
-    annual_total_volume = tier_system.total_volume()
-    annual_total_revenue = tier_system.total_revenue()
-    Q_information_table.set(4, VOL_COL, int(annual_total_volume))
-    Q_information_table.set(4, REVENUE_COL, tier_system.total_revenue())
-#    volume_table.set(4, 1, annual_total_volume)
-#    revenue_table.set(4, 1, tier_system.total_revenue())
     for t in tier_system.get_tiers():
         t.log(logger)
-    row = 0
-    for q in raw_Qs.Qs:
-        tier_system.clear_account()
-        for v in q:
-            tier_system.account(v.get_billable_usage())
-        Q_information_table.set(row, VOL_COL, int(tier_system.total_volume()))
-        Q_information_table.set(row, VOL_PCT_COL, (float(tier_system.total_volume()) / float(annual_total_volume)) * 100.0)
-        Q_information_table.set(row, REVENUE_COL, tier_system.total_revenue())
-        Q_information_table.set(row, REVENUE_PCT_COL, (float(tier_system.total_revenue()) / float(annual_total_revenue)) * 100.0)
-#        volume_table.set(row, 1, tier_system.total_volume())
-#        volume_table.set(row, 2, (float(tier_system.total_volume()) / float(annual_total_volume)) * 100.0)
-#        revenue_table.set(row, 1, tier_system.total_revenue())
-#        revenue_table.set(row, 2, (float(tier_system.total_revenue()) / float(annual_total_revenue)) * 100.0)
-        row += 1
+    update_information_table()
     setup_report_text(canvas)
     select_quarter(radio_group.selected())
         
@@ -462,14 +469,8 @@ pad_frame = ttk.Frame(bottom_frame, width=200, height = 400)
 pad_frame.grid_columnconfigure(0, minsize=80)
 information_frame = ttk.Frame(bottom_frame)
 information_frame.grid(row=0, column=1, sticky=tk.NSEW)
-#volume_frame = ttk.Frame(bottom_frame, width=300, height=400)
-#revenue_frame = ttk.Frame(bottom_frame, width=300, height=400)
-#comp_revenue_frame = ttk.Frame(bottom_frame, width=300, height=400)
 key_rates_frame = ttk.Frame(bottom_frame, width=300, height=400)
 pad_frame.grid(row=0, column = 0, sticky='ns')
-#volume_frame.grid(row=0, column = 1, sticky='ns')
-#revenue_frame.grid(row=0, column = 2, sticky='ns')
-#comp_revenue_frame.grid(row=0, column = 3, sticky='ns')
 key_rates_frame.grid(row=0, column = 2, sticky='ns')
 
 label_widget(pad_frame, 0, 0, '', -1)
@@ -488,34 +489,6 @@ Q_information_table.set(3, 0, 'Q4')
 Q_information_table.set(4, 0, 'Annual')
 for c in range(VOL_COL, COMP_REVENUE_PCT_COL + 1):
     Q_information_table.set_column_width(c, 12)
-
-# volume_table = Table(volume_frame, ["Quarter", "Volume", "Pct"], (5, 3), app_bg_color)
-# singleton_component_setup(volume_frame, volume_table)
-# volume_table.set(0, 0, "Q1")
-# volume_table.set(1, 0, "Q2")
-# volume_table.set(2, 0, "Q3")
-# volume_table.set(3, 0, "Q4")
-# volume_table.set(4, 0, "Annual")
-# volume_table.set_column_width(1, 12)
-# volume_table.set_column_width(2, 12)
-# revenue_table = Table(revenue_frame, ["Quarter", "$", "Pct"], (5, 3), app_bg_color)
-# singleton_component_setup(revenue_frame, revenue_table)
-# revenue_table.set(0, 0, "Q1")
-# revenue_table.set(1, 0, "Q2")
-# revenue_table.set(2, 0, "Q3")
-# revenue_table.set(3, 0, "Q4")
-# revenue_table.set(4, 0, "Annual")
-# revenue_table.set_column_width(1, 12)
-# revenue_table.set_column_width(2, 12)
-# comp_revenue_table = Table(comp_revenue_frame, ["Quarter", "Comparison $", "Pct"], (5, 3), app_bg_color)
-# singleton_component_setup(comp_revenue_frame, comp_revenue_table)
-# comp_revenue_table.set(0, 0, "Q1")
-# comp_revenue_table.set(1, 0, "Q2")
-# comp_revenue_table.set(2, 0, "Q3")
-# comp_revenue_table.set(3, 0, "Q4")
-# comp_revenue_table.set(4, 0, "Annual")
-# comp_revenue_table.set_column_width(1, 12)
-# comp_revenue_table.set_column_width(2, 12)
 
 key_rates_table = Table(key_rates_frame, ["Tier", "Rate($)"], (3, 2), app_bg_color)
 singleton_component_setup(key_rates_frame, key_rates_table)
@@ -556,8 +529,6 @@ def try_elasticity_event():
         tier_system.clear_account()
     Q_information_table.set(4, VOL_COL, int(annual_total_volume / NUM_ITERS))
     Q_information_table.set(4, REVENUE_COL, annual_total_revenue / NUM_ITERS)
-#    volume_table.set(4, 1, annual_total_volume / NUM_ITERS)
-#    revenue_table.set(4, 1, annual_total_revenue / NUM_ITERS)
     
 button_widget(key_rates_frame, 4, 1, 'Set key rates', set_key_rates_event)
 button_widget(key_rates_frame, 5, 1, 'Try elasticity', try_elasticity_event)
