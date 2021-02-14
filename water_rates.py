@@ -278,11 +278,9 @@ logger = Logger()
 
 def select_quarter(which):
     canvas.delete("all")
-#    if Q_var.get() == 4:
     if which == 4:
         do_graph(canvas, account_totals, 20, 20)
     else:
-#        do_graph(canvas, [ x.get_usage() for x in raw_Qs.Qs[Q_var.get()] ], 20, 20)
         do_graph(canvas, [ x.get_usage() for x in raw_Qs.Qs[which] ], 20, 20)
 
 root = tk.Tk()
@@ -430,16 +428,9 @@ graph_frame.grid(row=0, column = 1, sticky='nsew')
 tier_frame.grid(row=0, column = 2, sticky='ns')
 elasticity_frame.grid(row=0, column = 3, sticky='ns')
 
-# Q widgets
-Q_var = tk.IntVar()
-Q_var.set(0)
-
 radio_params = [ ("Q1", 0), ("Q2", 1), ("Q3", 2), ("Q4", 3), ("Annual", 4) ]
 radio_group = RadioGroup.RadioGroup(Q_frame, radio_params, select_quarter)
 radio_group.grid(row=0, column=0, sticky=tk.NS)
-#for r in radio_params:
-#    rb = ttk.Radiobutton(Q_frame, text=r[0], variable=Q_var, value=r[1], command=select_quarter)
-#    rb.grid(row=r[1], column=0, sticky=tk.W)
 Q_frame.grid(row=0, column = 0, sticky='ns')
 
 # Set up the graph
@@ -507,6 +498,9 @@ key_rates_table.set_column_width(1, 12)
 key_rates_table.set(0, 1, str(MINIMUM_TIER_PRICE))
 key_rates_table.set(1, 1, str(SECOND_TIER_PRICE))
 key_rates_table.set(2, 1, str(LAST_TIER_PRICE))
+key_rates_table.set_readonly(0, 1, False)
+key_rates_table.set_readonly(1, 1, False)
+key_rates_table.set_readonly(2, 1, False)
 def set_key_rates_event():
     set_key_rates(float(key_rates_table.get(0, 1)), float(key_rates_table.get(1, 1)), float(key_rates_table.get(2, 1)))
     analyze_current_data_set()

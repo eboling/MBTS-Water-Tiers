@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 
 class Table(ttk.Frame):
-    def setup_widgets(self, header_row, dimensions):
+    def setup_widgets(self, header_row, dimensions, readonly):
         if len(header_row) != dimensions[1]:
             raise Exception("header row length doesn't match dimensions in table")
         idx = 0
@@ -16,19 +16,19 @@ class Table(ttk.Frame):
         for row in range(1, dimensions[0] + 1):
             r = []
             for col in range(0, dimensions[1]):
-                e = ttk.Entry(self, width=8, justify=tk.RIGHT)
+                e = ttk.Entry(self, width=8, justify=tk.RIGHT, state='readonly' if readonly else state.tk.NORMAL)
                 e.grid(row = row, column = col)
 #                e.config(bg = "white");
                 r.append(e)
             self.cells.append(r)
             self.rowconfigure(row - 1, weight=1)
         
-    def __init__(self, frame, header_row, dimensions, bg_color):
+    def __init__(self, frame, header_row, dimensions, bg_color, readonly=True):
         ttk.Frame.__init__(self, frame)
         self.cells = []
         self.headers = []
         self.bg_color = bg_color
-        self.setup_widgets(header_row, dimensions)
+        self.setup_widgets(header_row, dimensions, readonly)
 
     def get(self, row, column):
         return self.cells[row][column].get()
@@ -41,8 +41,14 @@ class Table(ttk.Frame):
             s = "{:10,.2f}".format(value)
         else:
             s = str(value)
+        state = self.cells[row][column].cget('state')
+        self.cells[row][column].configure(state=tk.NORMAL)
         self.cells[row][column].insert(0, s)
+        self.cells[row][column].configure(state=state)
 
+    def set_readonly(self, row, column, readonly):
+        self.cells[row][column].configure(state='readonly' if readonly else tk.NORMAL)
+        
     def set_column_width(self, column, width):
         self.headers[column].config(width=width);
         for r in self.cells:
