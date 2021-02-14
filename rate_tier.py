@@ -25,7 +25,7 @@ class TierSystem:
     def add_tier(self, tier):
         self.tiers.append(tier)
     def set_elasticity(self, multipliers):
-        for i in xrange(0, len(self.tiers)):
+        for i in range(0, len(self.tiers)):
             self.tiers[i].elasticity = multipliers[i]
         #n = len(multipliers)
         #idx = 0
