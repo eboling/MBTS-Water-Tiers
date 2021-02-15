@@ -5,7 +5,6 @@ from numpy import loadtxt
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
-#import tkFileDialog
 from RawQData import RawQData
 from WaterAnalyzer import WaterAnalyzer, MINIMUM_TIER_PRICE, SECOND_TIER_PRICE, LAST_TIER_PRICE, set_key_rates
 from TableUI import Table
@@ -301,19 +300,61 @@ def select_quarter(which):
 
 root = tk.Tk()
 
+root.grid_rowconfigure(1, weight=1)
+root.grid_columnconfigure(0, weight=1)
+
 #top_frame = ttk.Frame(root, background=app_bg_color, width=600, height=50, pady=3)
 #center_frame= ttk.Frame(root, background=app_bg_color, width=50, height=50, padx = 3, pady=3)
 #bottom_frame= ttk.Frame(root, background=app_bg_color, width=600, height=400, pady=3)
-top_frame = ttk.Frame(root, width=600, height=50)
-center_frame= ttk.Frame(root, width=50, height=50)
-bottom_frame= ttk.Frame(root, width=600, height=400)
+#top_frame = ttk.Frame(root, width=600, height=50)
+top_frame = ttk.Frame(root)
+center_frame= ttk.Frame(root)
+bottom_frame= ttk.Frame(root)
 
-root.grid_rowconfigure(1, weight=1)
-root.grid_columnconfigure(0, weight=1)
-top_frame.grid(row=0, sticky="ew")
-center_frame.grid(row=1, sticky="nsew")
+# center frame widgets
+#center_frame.grid_rowconfigure(0, weight=1)
+#center_frame.grid_columnconfigure(1, weight=1)
+
+#Q_frame = ttk.Frame(root, width=200, height=300)
+#graph_frame = ttk.Frame(root, width=800, height=800)
+#tier_frame = ttk.Frame(root, width=300, height=400)
+#elasticity_frame = ttk.Frame(root, width=100, height=400)
+Q_frame = ttk.Frame(center_frame)
+graph_frame = ttk.Frame(center_frame, width=800, height=800)
+tier_frame = ttk.Frame(center_frame)
+elasticity_frame = ttk.Frame(center_frame)
+tier_settings_frame = ttk.Frame(center_frame)
+Q_info_frame = ttk.Frame(bottom_frame)
+
+top_frame.grid(row=0,column=0, sticky=tk.NSEW)
+center_frame.grid(row=1,column=0, sticky=tk.NSEW)
+bottom_frame.grid(row=2,column=0, sticky=tk.NSEW)
+                   
+top_frame.grid(row=0, column=0, sticky="ew")
+Q_frame.grid(row=0, column = 0, sticky='nw')
+graph_frame.grid(row=0, column = 1, rowspan=3, sticky='nsew')
+tier_frame.grid(row=0, column = 2, sticky='nw', padx=20)
+elasticity_frame.grid(row=0, column = 3, sticky='nw')
+tier_settings_frame.grid(row=2, column=2, sticky=tk.NW, padx=20)
+Q_info_frame.grid(row=0, column=1, sticky = tk.EW)
+
+# let the resize affect the graph
+center_frame.rowconfigure(0, weight=1)
+center_frame.columnconfigure(1, weight=1)
+# root.rowconfigure(0)
+# root.rowconfigure(1, weight=1)
+# root.rowconfigure(2, weight=1)
+# root.rowconfigure(3, weight=2)
+# root.columnconfigure(0)
+# root.columnconfigure(1, weight=1)
+# root.columnconfigure(2, weight=2)
+# root.columnconfigure(3, weight=2)
+# root.columnconfigure(4, weight=2)
+
+# top frame widgets
+#top_frame.grid_rowconfigure(0, weight=1)
+#top_frame.grid_columnconfigure(1, weight=1)
 #pad_frame.grid(row=2, column=0)
-bottom_frame.grid(row=2, column = 0, sticky="ew")
 
 def ask_file_helper(caption, dir, ext_desc, ext):
     options = {}
@@ -416,9 +457,29 @@ def singleton_component_setup(frame, component):
     frame.rowconfigure(0, weight=1)
     frame.columnconfigure(0, weight=1)
 
-# top frame widgets
-top_frame.grid_rowconfigure(0, weight=1)
-top_frame.grid_columnconfigure(1, weight=1)
+def set_key_rates_event():
+    set_key_rates(float(key_rates_table.get(0, 1)), float(key_rates_table.get(1, 1)), float(key_rates_table.get(2, 1)))
+    analyze_current_data_set()
+def try_elasticity_event():
+    elasticity = []
+    i = len(tier_system.get_tiers()) - 1
+    while i >= 0:
+        elasticity.append(float(elasticity_table.get(i, 0)))
+        i -= 1
+    tier_system.set_elasticity(elasticity)
+    annual_total_volume = 0
+    annual_total_revenue = 0
+    NUM_ITERS = 100
+    tier_system.clear_account()
+    for i in range(0, NUM_ITERS):
+        for q in raw_Qs.Qs:
+            for v in q:
+                tier_system.account(v.get_billable_usage())
+        annual_total_volume += tier_system.total_volume()
+        annual_total_revenue += tier_system.total_revenue()
+        tier_system.clear_account()
+    Q_information_table.set(4, VOL_COL, int(annual_total_volume / NUM_ITERS))
+    Q_information_table.set(4, REVENUE_COL, annual_total_revenue / NUM_ITERS)
 
 label_widget(top_frame, 0, 0, 'Data set:', -1)
 data_dir_value = label_widget(top_frame, 0, 1, '', 20)
@@ -431,23 +492,9 @@ button_widget(top_frame, 0, 7, 'Load tiers...', load_tier_system)
 button_widget(top_frame, 0, 8, 'Load comp tiers...', load_comparison_tiers_event)
 button_widget(top_frame, 0, 9, 'Save graph...', save_graph_event)
 
-# center frame widgets
-center_frame.grid_rowconfigure(0, weight=1)
-center_frame.grid_columnconfigure(1, weight=1)
-
-Q_frame = ttk.Frame(center_frame, width=200, height=300)
-graph_frame = ttk.Frame(center_frame, width=800, height=800)
-tier_frame = ttk.Frame(center_frame, width=300, height=400)
-elasticity_frame = ttk.Frame(center_frame, width=100, height=400)
-
-graph_frame.grid(row=0, column = 1, sticky='nsew')
-tier_frame.grid(row=0, column = 2, sticky='ns')
-elasticity_frame.grid(row=0, column = 3, sticky='ns')
-
 radio_params = [ ("Q1", 0), ("Q2", 1), ("Q3", 2), ("Q4", 3), ("Annual", 4) ]
 radio_group = RadioGroup.RadioGroup(Q_frame, radio_params, select_quarter)
 radio_group.grid(row=0, column=0, sticky=tk.NS)
-Q_frame.grid(row=0, column = 0, sticky='ns')
 
 # Set up the graph
 canvas_width =  780
@@ -460,20 +507,15 @@ tier_table = Table(tier_frame, ["Low", "High", "Price"], (12, 3), app_bg_color)
 singleton_component_setup(tier_frame, tier_table)
 elasticity_table = Table(elasticity_frame, ["Elasticity"], (12, 1), app_bg_color)
 singleton_component_setup(elasticity_frame, elasticity_table)
+b = button_widget(center_frame, 1, 3, 'Try elasticity', try_elasticity_event)
+b.grid(row=1, column=3, sticky=tk.NW);
 
-# Set up the bottom frames
-#bottom_frame.grid_rowconfigure(0, weight=1)
-#bottom_frame.grid_columnconfigure(1, weight=1)
-
-pad_frame = ttk.Frame(bottom_frame, width=200, height = 400)
-pad_frame.grid_columnconfigure(0, minsize=80)
-information_frame = ttk.Frame(bottom_frame)
+information_frame = ttk.Frame(Q_info_frame)
 information_frame.grid(row=0, column=1, sticky=tk.NSEW)
-key_rates_frame = ttk.Frame(bottom_frame, width=300, height=400)
-pad_frame.grid(row=0, column = 0, sticky='ns')
-key_rates_frame.grid(row=0, column = 2, sticky='ns')
+key_rates_frame = ttk.Frame(tier_settings_frame, width=300, height=400)
+key_rates_frame.grid(row=1, column = 2, sticky='ns')
 
-label_widget(pad_frame, 0, 0, '', -1)
+#label_widget(pad_frame, 0, 0, '', -1)
 VOL_COL = 1
 VOL_PCT_COL = 2
 REVENUE_COL = 3
@@ -506,32 +548,8 @@ key_rates_table.set(2, 1, str(LAST_TIER_PRICE))
 key_rates_table.set_readonly(0, 1, False)
 key_rates_table.set_readonly(1, 1, False)
 key_rates_table.set_readonly(2, 1, False)
-def set_key_rates_event():
-    set_key_rates(float(key_rates_table.get(0, 1)), float(key_rates_table.get(1, 1)), float(key_rates_table.get(2, 1)))
-    analyze_current_data_set()
-def try_elasticity_event():
-    elasticity = []
-    i = len(tier_system.get_tiers()) - 1
-    while i >= 0:
-        elasticity.append(float(elasticity_table.get(i, 0)))
-        i -= 1
-    tier_system.set_elasticity(elasticity)
-    annual_total_volume = 0
-    annual_total_revenue = 0
-    NUM_ITERS = 100
-    tier_system.clear_account()
-    for i in range(0, NUM_ITERS):
-        for q in raw_Qs.Qs:
-            for v in q:
-                tier_system.account(v.get_billable_usage())
-        annual_total_volume += tier_system.total_volume()
-        annual_total_revenue += tier_system.total_revenue()
-        tier_system.clear_account()
-    Q_information_table.set(4, VOL_COL, int(annual_total_volume / NUM_ITERS))
-    Q_information_table.set(4, REVENUE_COL, annual_total_revenue / NUM_ITERS)
     
-button_widget(key_rates_frame, 4, 1, 'Set key rates', set_key_rates_event)
-button_widget(key_rates_frame, 5, 1, 'Try elasticity', try_elasticity_event)
+button_widget(key_rates_frame, 4, 0, 'Set key rates', set_key_rates_event)
 
 # Prime the application
 load_annual_data(os.getcwd() + '/datasets/2017')
