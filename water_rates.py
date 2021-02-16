@@ -12,6 +12,7 @@ from TableUI import Table
 from rate_tier import TierSystem, RateTier
 
 import RadioGroup
+import StatusBar
 
 app_bg_color = 'gray'
 #GRAPH_MAX = 2500
@@ -308,7 +309,7 @@ root.grid_columnconfigure(0, weight=1)
 #center_frame= ttk.Frame(root, background=app_bg_color, width=50, height=50, padx = 3, pady=3)
 #bottom_frame= ttk.Frame(root, background=app_bg_color, width=600, height=400, pady=3)
 #top_frame = ttk.Frame(root, width=600, height=50)
-top_frame = ttk.Frame(root) # move this to a status bar?
+#top_frame = ttk.Frame(root) # move this to a status bar?
 notebook = ttk.Notebook(root, padding = 3)
 explore_frame = ttk.Frame(notebook)
 elasticity_tab_frame = ttk.Frame(notebook)
@@ -332,12 +333,12 @@ elasticity_frame = ttk.Frame(center_frame)
 tier_settings_frame = ttk.Frame(center_frame)
 Q_info_frame = ttk.Frame(bottom_frame)
 
-top_frame.grid(row=0,column=0, sticky=tk.NSEW)
-notebook.grid(row=1, column=0, sticky=tk.NSEW)
+#top_frame.grid(row=0,column=0, sticky=tk.NSEW)
+notebook.grid(row=0, column=0, sticky=tk.NSEW)
 center_frame.grid(row=0,column=0, sticky=tk.NSEW)
 bottom_frame.grid(row=1,column=0, sticky=tk.NSEW)
                    
-top_frame.grid(row=0, column=0, sticky="ew")
+#top_frame.grid(row=0, column=0, sticky="ew")
 Q_frame.grid(row=0, column = 0, sticky='nw')
 graph_frame.grid(row=0, column = 1, rowspan=3, sticky='nsew')
 tier_frame.grid(row=0, column = 2, sticky='nw', padx=20)
@@ -402,7 +403,8 @@ def load_tier_system():
         for l in lines:
             rates.add_tier(RateTier(l[0], l[1], l[2]))
         install_tier_system(rates)
-        tier_system_label.config(text=os.path.split(filename)[1])
+#        tier_system_label.config(text=os.path.split(filename)[1])
+        tier_system_label.set(os.path.split(filename)[1])
 
 def load_comparison_tiers(filename):
     lines = loadtxt(filename)
@@ -410,7 +412,8 @@ def load_comparison_tiers(filename):
     for l in lines:
         rates.add_tier(RateTier(l[0], l[1], l[2]))
     comparison_tiers = rates
-    comparison_system_label.config(text=os.path.split(filename)[1])
+#    comparison_system_label.config(text=os.path.split(filename)[1])
+    comparison_system_label.set(os.path.split(filename)[1])
     install_comparison_tier_system(rates)
     
 def load_comparison_tiers_event():
@@ -428,7 +431,8 @@ def analyze_current_data_set():
     analyzer = WaterAnalyzer(raw_Qs, logger)
     analyzer.Analyze()
     install_tier_system(analyzer.get_tier_system())
-    tier_system_label.config(text='<from analysis>')
+#    tier_system_label.config(text='<from analysis>')
+    tier_system_label.set('<from analysis>')
 #    raw_Qs.set_reporting_units(WaterVolumeUnits.GALLONS)
     select_quarter(radio_group.selected())
     
@@ -437,7 +441,8 @@ def load_annual_data(data_dir):
     raw_Qs = RawQData(data_dir)
     global account_totals
     account_totals = [ x.get_usage() for x in raw_Qs.collect_account_totals()]
-    data_dir_value.config(text=os.path.split(data_dir)[1])
+#    data_dir_value.config(text=os.path.split(data_dir)[1])
+    data_dir_value.set(os.path.split(data_dir)[1])
     analyze_current_data_set()
     
 def load_annual_data_event():
@@ -506,12 +511,13 @@ def try_elasticity_event():
     Q_information_table.set(4, VOL_COL, int(annual_total_volume / NUM_ITERS))
     Q_information_table.set(4, REVENUE_COL, annual_total_revenue / NUM_ITERS)
 
-label_widget(top_frame, 0, 0, 'Data set:', -1)
-data_dir_value = label_widget(top_frame, 0, 1, '', 20)
-label_widget(top_frame, 0, 2, 'Tier system:', -1)
-tier_system_label = label_widget(top_frame, 0, 3, '', 20)
-label_widget(top_frame, 0, 4, 'Comparison system:', -1)
-comparison_system_label = label_widget(top_frame, 0, 5, '', 20)
+data_dir_value = tk.StringVar()
+tier_system_label = tk.StringVar()
+comparison_system_label = tk.StringVar()
+status_bar = StatusBar.StatusBar(root, [('Data set:', 30, data_dir_value),
+                                            ('Tiers:', 50, tier_system_label),
+                                            ('Comparison tiers:', 50, comparison_system_label)])
+status_bar.grid(row=1, column=0, sticky= tk.EW)
 
 radio_params = [ ("Q1", 0), ("Q2", 1), ("Q3", 2), ("Q4", 3), ("Annual", 4) ]
 radio_group = RadioGroup.RadioGroup(Q_frame, radio_params, select_quarter)
