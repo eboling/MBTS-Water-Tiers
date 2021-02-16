@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 from RawQData import RawQData
+from RawQData import WaterVolumeUnits
 from WaterAnalyzer import WaterAnalyzer, MINIMUM_TIER_PRICE, SECOND_TIER_PRICE, LAST_TIER_PRICE, set_key_rates
 from TableUI import Table
 from rate_tier import TierSystem, RateTier
@@ -307,9 +308,14 @@ root.grid_columnconfigure(0, weight=1)
 #center_frame= ttk.Frame(root, background=app_bg_color, width=50, height=50, padx = 3, pady=3)
 #bottom_frame= ttk.Frame(root, background=app_bg_color, width=600, height=400, pady=3)
 #top_frame = ttk.Frame(root, width=600, height=50)
-top_frame = ttk.Frame(root)
-center_frame= ttk.Frame(root)
-bottom_frame= ttk.Frame(root)
+top_frame = ttk.Frame(root) # move this to a status bar?
+notebook = ttk.Notebook(root, padding = 3)
+explore_frame = ttk.Frame(notebook)
+elasticity_tab_frame = ttk.Frame(notebook)
+notebook.add(explore_frame, text='Explore')
+notebook.add(elasticity_tab_frame, text='Elasticity')
+center_frame= ttk.Frame(explore_frame)
+bottom_frame= ttk.Frame(explore_frame)
 
 # center frame widgets
 #center_frame.grid_rowconfigure(0, weight=1)
@@ -327,8 +333,9 @@ tier_settings_frame = ttk.Frame(center_frame)
 Q_info_frame = ttk.Frame(bottom_frame)
 
 top_frame.grid(row=0,column=0, sticky=tk.NSEW)
-center_frame.grid(row=1,column=0, sticky=tk.NSEW)
-bottom_frame.grid(row=2,column=0, sticky=tk.NSEW)
+notebook.grid(row=1, column=0, sticky=tk.NSEW)
+center_frame.grid(row=0,column=0, sticky=tk.NSEW)
+bottom_frame.grid(row=1,column=0, sticky=tk.NSEW)
                    
 top_frame.grid(row=0, column=0, sticky="ew")
 Q_frame.grid(row=0, column = 0, sticky='nw')
@@ -339,6 +346,8 @@ tier_settings_frame.grid(row=2, column=2, sticky=tk.NW, padx=20)
 Q_info_frame.grid(row=0, column=1, sticky = tk.EW)
 
 # let the resize affect the graph
+explore_frame.rowconfigure(0, weight=1)
+explore_frame.columnconfigure(0, weight=1)
 center_frame.rowconfigure(0, weight=1)
 center_frame.columnconfigure(1, weight=1)
 # root.rowconfigure(0)
@@ -420,6 +429,7 @@ def analyze_current_data_set():
     analyzer.Analyze()
     install_tier_system(analyzer.get_tier_system())
     tier_system_label.config(text='<from analysis>')
+#    raw_Qs.set_reporting_units(WaterVolumeUnits.GALLONS)
     select_quarter(radio_group.selected())
     
 def load_annual_data(data_dir):
@@ -459,9 +469,22 @@ def singleton_component_setup(frame, component):
     frame.rowconfigure(0, weight=1)
     frame.columnconfigure(0, weight=1)
 
+def setup_menu(window):
+    menubar = tk.Menu(window)
+    window.config(menu=menubar)
+    file_menu = tk.Menu(menubar, tearoff=0)
+    file_menu.add_command(label='Load data...', command=load_annual_data_event)
+    file_menu.add_command(label='Load tiers...', command=load_tier_system)
+    file_menu.add_command(label='Load comparison tiers...', command=load_comparison_tiers_event)
+    file_menu.add_command(label='Save graph...', command=save_graph_event)
+    file_menu.add_separator()
+    file_menu.add_command(label='Exit', command=window.quit)
+    menubar.add_cascade(label='File', menu=file_menu)
+
 def set_key_rates_event():
     set_key_rates(float(key_rates_table.get(0, 1)), float(key_rates_table.get(1, 1)), float(key_rates_table.get(2, 1)))
     analyze_current_data_set()
+    
 def try_elasticity_event():
     elasticity = []
     i = len(tier_system.get_tiers()) - 1
@@ -489,10 +512,6 @@ label_widget(top_frame, 0, 2, 'Tier system:', -1)
 tier_system_label = label_widget(top_frame, 0, 3, '', 20)
 label_widget(top_frame, 0, 4, 'Comparison system:', -1)
 comparison_system_label = label_widget(top_frame, 0, 5, '', 20)
-button_widget(top_frame, 0, 6, 'Load data...', load_annual_data_event)
-button_widget(top_frame, 0, 7, 'Load tiers...', load_tier_system)
-button_widget(top_frame, 0, 8, 'Load comp tiers...', load_comparison_tiers_event)
-button_widget(top_frame, 0, 9, 'Save graph...', save_graph_event)
 
 radio_params = [ ("Q1", 0), ("Q2", 1), ("Q3", 2), ("Q4", 3), ("Annual", 4) ]
 radio_group = RadioGroup.RadioGroup(Q_frame, radio_params, select_quarter)
@@ -558,5 +577,16 @@ load_annual_data(os.getcwd() + '/datasets/2017')
 install_tier_system(analyzer.get_tier_system())
 load_comparison_tiers(os.getcwd() + '/tiers/mbts_2017.txt')
 select_quarter(radio_group.selected());
+
+root.title('Water Rates')
+# Check if we're on OS X, first.
+# if platform == 'darwin':
+#     from Foundation import NSBundle
+#     bundle = NSBundle.mainBundle()
+#     if bundle:
+#         info = bundle.localizedInfoDictionary() or bundle.infoDictionary()
+#         if info and info['CFBundleName'] == 'Python':
+#             info['CFBundleName'] = 'Water Rates'
+setup_menu(root)
 
 tk.mainloop()
