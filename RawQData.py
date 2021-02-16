@@ -1,5 +1,6 @@
 import sys
 import csv
+from enum import Enum
 from numpy import loadtxt, arange, ones
 from scipy import stats
 
@@ -43,19 +44,37 @@ class WaterServices:
     def get_services(self):
         return self.services.values()
 
+class WaterVolumeUnits(Enum):
+    HCF = 1
+    GALLONS = 2
+
+    @classmethod
+    def convert(cls, from_units, to_units, value):
+        if from_units != to_units:
+            if from_units == cls.HCF:
+                # HCF -> gallons
+                value = value * 100.0 * 7.48052
+            else:
+                # gallons -> HCF
+                value = (value * 0.13368) / 100.0
+        return value
+        
+
 class MeterReading:
     def __init__(self, service, usage):
         self.service = service
         self.usage = usage
+        self.units = WaterVolumeUnits.HCF
+        self.reporting_units = WaterVolumeUnits.HCF
         service.readings.append(self)
-        
+
     def get_billable_usage(self):
         if self.service.get_on_well():
             return 0
-        return self.usage
+        return WaterVolumeUnits.convert(self.units, self.reporting_units, self.usage)
     
     def get_usage(self):
-        return self.usage
+        return WaterVolumeUnits.convert(self.units, self.reporting_units, self.usage)
     
     def set_usage(self, v):
         self.usage = v
@@ -79,6 +98,12 @@ class RawQData:
             q.sort(key = lambda tup: tup.get_usage())
             #q.sort(key = lambda tup: tup[1])
         #self.Qs = [ [ (x[0], x[1] / 100.0) for x in q] for q in self.Qs]
+
+    """Sets the WaterVolumeUnits type that readings in this batch of data will report."""
+    def set_reporting_units(self, units):
+        for q in self.Qs:
+            for mr in q:
+                mr.reporting_units = units
 
     '''Returns the index of the quarter with the heaviest usage.'''
     def heaviest_quarter(self):
