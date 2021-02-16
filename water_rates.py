@@ -368,9 +368,11 @@ def ask_file_helper(caption, dir, ext_desc, ext):
 def ask_file_save_as_helper(caption, dir, ext_desc, ext):
     options = {}
     options['defaultextension'] = ext
-    options['filetypes'] = [('all files', '.*'), (ext_desc, ext)]
+    # file types commented out because of apparent tkinter bug on OS X, causing objc crash.
+#    options['filetypes'] = [('all files', '.*'), (ext_desc, ext)]
     options['initialdir'] = dir
     options['title'] = caption
+    options['parent'] = root
     filename = filedialog.asksaveasfilename(**options)
     return filename
 
