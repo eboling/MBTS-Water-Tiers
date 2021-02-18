@@ -1,6 +1,25 @@
 import tkinter as tk
 from tkinter import ttk
 
+class TableCell:
+    def __init__(self, frame, readonly = True):
+        self.widget = ttk.Entry(frame, width=8, justify=tk.RIGHT, state='readonly' if readonly else state.tk.NORMAL)
+        self.format = None
+
+    def set(self, value):
+        if self.format:
+            value = self.format.format(value)
+        else:
+            value = str(value)
+        state = self.widget.cget('state')
+        self.widget.configure(state=tk.NORMAL)
+        self.widget.delete(0, tk.END)
+        self.widget.insert(0, value)
+        self.widget.configure(state=state)
+
+    def get(self):
+        return self.widget.get()
+
 class Table(ttk.Frame):
     def __setup_widgets(self, header_row, dimensions, readonly):
         self.rows = dimensions[0]
@@ -14,7 +33,8 @@ class Table(ttk.Frame):
         for row in range(1, dimensions[0] + 1):
             r = []
             for col in range(0, dimensions[1]):
-                e = ttk.Entry(self, width=8, justify=tk.RIGHT, state='readonly' if readonly else state.tk.NORMAL)
+#                e = ttk.Entry(self, width=8, justify=tk.RIGHT, state='readonly' if readonly else state.tk.NORMAL)
+                e = TableCell(self, readonly)
                 r.append(e)
             self.cells.append(r)
             self.rowconfigure(row, weight=1)
@@ -25,19 +45,19 @@ class Table(ttk.Frame):
             h.grid_forget()
         for r in self.cells:
             for c in r:
-                c.grid_forget()
+                c.widget.grid_forget()
         for h, col in zip(self.headers, range(0, self.columns)):
             h.grid(row=0, column=col, sticky=tk.EW)
         for r, row in zip(self.cells, range(1, self.rows + 1)):
             for c, col in zip(r, range(0, self.columns)):
-                c.grid(row=row, column=col)
+                c.widget.grid(row=row, column=col)
 
     def delete_rows(self, start_row, count):
         end_row = start_row + count
         for row in range(start_row, end_row):
             for cell in self.cells[row]:
-                cell.grid_forget()
-                cell.destroy()
+                cell.widget.grid_forget()
+                cell.widget.destroy()
         del self.cells[start_row:end_row]
         self.rows = len(self.cells)
         self.__regrid()
@@ -47,8 +67,8 @@ class Table(ttk.Frame):
         for row in self.cells:
             for col in range(start_col, end_col):
                 cell = row[col]
-                cell.grid_forget()
-                cell.destroy()
+                cell.widget.grid_forget()
+                cell.widget.destroy()
             del row[start_col:end_col]
             
         for col in range(start_col, end_col):
@@ -64,7 +84,8 @@ class Table(ttk.Frame):
         for row in range(start_row, start_row + count):
             r = []
             for col in range(0, self.columns):
-                e = ttk.Entry(self, width=8, justify=tk.RIGHT, state='readonly' if readonly else state.tk.NORMAL)
+#                e = ttk.Entry(self, width=8, justify=tk.RIGHT, state='readonly' if readonly else state.tk.NORMAL)
+                e = TableCell(self, readonly)
                 r.append(e)
             new_rows.append(r)
             self.rowconfigure(row, weight=1)
@@ -77,7 +98,8 @@ class Table(ttk.Frame):
         for r, row in zip(self.cells, range(0, self.rows)):
             new_cols = []
             for col in range(start_col, end_col):
-                e = ttk.Entry(self, width=8, justify=tk.RIGHT, state='readonly' if readonly else state.tk.NORMAL)
+#                e = ttk.Entry(self, width=8, justify=tk.RIGHT, state='readonly' if readonly else state.tk.NORMAL)
+                e = TableCell(self, readonly)
                 new_cols.append(e)
             r[start_col:start_col] = new_cols
 
@@ -109,23 +131,27 @@ class Table(ttk.Frame):
         return self.cells[row][column].get()
 
     def set(self, row, column, value):
+        self.cells[row][column].set(value)
         #print "set: {0}, {1}".format(row, column)
         #print "dims: {0}, {1}".format(len(self.cells), 0)
-        self.cells[row][column].delete(0, tk.END)
-        if isinstance(value, float):
-            s = "{:10,.2f}".format(value)
-        else:
-            s = str(value)
-        state = self.cells[row][column].cget('state')
-        self.cells[row][column].configure(state=tk.NORMAL)
-        self.cells[row][column].delete(0, tk.END)
-        self.cells[row][column].insert(0, s)
-        self.cells[row][column].configure(state=state)
+#        self.cells[row][column].delete(0, tk.END)
+#        if isinstance(value, float):
+#            s = "{:10,.2f}".format(value)
+#        else:
+#            s = str(value)
+#        state = self.cells[row][column].cget('state')
+#        self.cells[row][column].configure(state=tk.NORMAL)
+#        self.cells[row][column].delete(0, tk.END)
+#        self.cells[row][column].insert(0, s)
+#        self.cells[row][column].configure(state=state)
 
     def set_readonly(self, row, column, readonly):
-        self.cells[row][column].configure(state='readonly' if readonly else tk.NORMAL)
+        self.cells[row][column].widget.configure(state='readonly' if readonly else tk.NORMAL)
         
     def set_column_width(self, column, width):
         self.headers[column].config(width=width);
         for r in self.cells:
-            r[column].config(width=width);
+            r[column].widget.config(width=width);
+
+    def format(self, row, column, format_string):
+        self.cells[row][column].format = format_string;
