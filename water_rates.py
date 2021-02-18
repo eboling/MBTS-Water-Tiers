@@ -530,9 +530,9 @@ canvas = tk.Canvas(graph_frame, width=canvas_width, height=canvas_height, backgr
 canvas.grid(row=0, column=0, sticky='nsew')
 
 # Set up the tier frame
-tier_table = Table(tier_frame, ["Low", "High", "Price"], (12, 3), app_bg_color)
+tier_table = Table(tier_frame, ["Low", "High", "Price"], (12, 3))
 singleton_component_setup(tier_frame, tier_table)
-elasticity_table = Table(elasticity_frame, ["Elasticity"], (12, 1), app_bg_color)
+elasticity_table = Table(elasticity_frame, ["Elasticity"], (12, 1))
 singleton_component_setup(elasticity_frame, elasticity_table)
 b = button_widget(center_frame, 1, 3, 'Try elasticity', try_elasticity_event)
 b.grid(row=1, column=3, sticky=tk.NW);
@@ -549,7 +549,7 @@ REVENUE_COL = 3
 REVENUE_PCT_COL = 4
 COMP_REVENUE_COL = 5
 COMP_REVENUE_PCT_COL = 6
-Q_information_table = Table(information_frame, ['Quarter', 'Volume', 'Volume %', 'Revenue', 'Revenue %', 'Comparison $', '% Increase ($)'], (5, 7), app_bg_color)
+Q_information_table = Table(information_frame, ['Quarter', 'Volume', 'Volume %', 'Revenue', 'Revenue %', 'Comparison $', '% Increase ($)'], (5, 7))
 Q_information_table.grid(row=0, column=0, sticky=tk.NSEW)
 Q_information_table.set(0, 0, 'Q1')
 Q_information_table.set(1, 0, 'Q2')
@@ -559,7 +559,7 @@ Q_information_table.set(4, 0, 'Annual')
 for c in range(VOL_COL, COMP_REVENUE_PCT_COL + 1):
     Q_information_table.set_column_width(c, 12)
 
-key_rates_table = Table(key_rates_frame, ["Tier", "Rate($)"], (3, 2), app_bg_color)
+key_rates_table = Table(key_rates_frame, ["Tier", "Rate($)"], (3, 2))
 singleton_component_setup(key_rates_frame, key_rates_table)
 key_rates_frame.rowconfigure(0, weight=1)
 key_rates_frame.rowconfigure(1, weight=1)
