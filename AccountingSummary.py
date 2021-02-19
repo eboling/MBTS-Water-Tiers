@@ -1,5 +1,7 @@
 #from rate_tier import TierSystem, RateTier
 
+import water_utils as WU
+
 class QuarterlySummary:
     def __init__(self, volume = 0, revenue = 0.0):
         self.volume = volume
@@ -45,8 +47,8 @@ class AccountingSummary:
             qs.revenue /= n
 
     def percentages(self, q_num):
-        volume_pct = self.quarterly_information[q_num].volume / self.annual_volume * 100.0
-        revenue_pct = self.quarterly_information[q_num].revenue / self.annual_revenue * 100.0
+        volume_pct = WU.pct(self.quarterly_information[q_num].volume, self.annual_volume)
+        revenue_pct = WU.pct(self.quarterly_information[q_num].revenue, self.annual_revenue)
         return volume_pct, revenue_pct
 
     def account(self, ts, Qs):

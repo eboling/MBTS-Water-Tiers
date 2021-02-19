@@ -22,3 +22,7 @@ def diff_pct(v, baseline):
     diff = v - baseline
     pct = (diff / baseline) * 100.0
     return diff, pct
+
+'''Returns the percentage a value represents of a baseline'''
+def pct(v, baseline):
+    return (v / baseline) * 100.0 if baseline != 0 else 0
