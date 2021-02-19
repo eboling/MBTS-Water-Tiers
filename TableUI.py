@@ -1,6 +1,10 @@
 import tkinter as tk
 from tkinter import ttk
 
+DollarFormat = '{0:.2f}'
+DecimalFormat = '{0:.0f}'
+PercentageFormat = '{0:.2f}'
+
 class TableCell:
     def __init__(self, frame, readonly = True):
         self.widget = ttk.Entry(frame, width=8, justify=tk.RIGHT, state='readonly' if readonly else state.tk.NORMAL)
@@ -132,26 +136,21 @@ class Table(ttk.Frame):
 
     def set(self, row, column, value):
         self.cells[row][column].set(value)
-        #print "set: {0}, {1}".format(row, column)
-        #print "dims: {0}, {1}".format(len(self.cells), 0)
-#        self.cells[row][column].delete(0, tk.END)
-#        if isinstance(value, float):
-#            s = "{:10,.2f}".format(value)
-#        else:
-#            s = str(value)
-#        state = self.cells[row][column].cget('state')
-#        self.cells[row][column].configure(state=tk.NORMAL)
-#        self.cells[row][column].delete(0, tk.END)
-#        self.cells[row][column].insert(0, s)
-#        self.cells[row][column].configure(state=state)
+
+    def binding(self, row, column):
+        return self.cells[row][column]
 
     def set_readonly(self, row, column, readonly):
         self.cells[row][column].widget.configure(state='readonly' if readonly else tk.NORMAL)
         
     def set_column_width(self, column, width):
-        self.headers[column].config(width=width);
+        self.headers[column].config(width=width)
         for r in self.cells:
-            r[column].widget.config(width=width);
+            r[column].widget.config(width=width)
 
     def format(self, row, column, format_string):
-        self.cells[row][column].format = format_string;
+        self.cells[row][column].format = format_string
+
+    def format_column(self, column, format_string):
+        for row in range(0, self.rows):
+            self.format(row, column, format_string)
